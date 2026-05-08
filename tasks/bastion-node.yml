@@ -1,0 +1,36 @@
+---
+- name: System bootstrap configuration
+  vars:
+    bastion_package:
+      - ansible
+      - pip
+
+  become: true
+  block:
+    # -----------------------------
+    # Message Start Task
+    # -----------------------------
+    - name: Start Task
+      debug:
+        msg: "✨✨✨✨ Preparing Bastion Node ✨✨✨✨"
+
+    # -----------------------------
+    # Preparing Configuration
+    # -----------------------------
+    - name: Base Configuration
+      ansible.builtin.include_tasks: configs.yml
+
+    # -----------------------------
+    # Install Required Packages
+    # -----------------------------
+    - name: Ensure base packages are installed
+      ansible.builtin.apt:
+        name: "{{ bastion_package | select('string') | list }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      retries: 3
+      delay: 10
+      until: result is succeeded
+      register: result

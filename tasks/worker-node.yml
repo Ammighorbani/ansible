@@ -1,0 +1,17 @@
+---
+- name: System Bootstraping Worker Node
+  become: true
+  block:
+
+    # -----------------------------
+    # Message Start Task
+    # -----------------------------
+    - name: Start Task
+      debug:
+        msg: "✨✨✨✨ Preparing Worker Node ✨✨✨✨"
+
+    - name: Base Installation
+      ansible.builtin.include_tasks: share/first-packages.yml
+
+        #- name: Tools Installation
+        #  ansible.builtin.include_tasks: tools.yml

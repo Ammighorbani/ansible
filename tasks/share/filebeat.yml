@@ -1,0 +1,37 @@
+---
+- name: Check if directory exists
+  stat:
+    path: "{{ custom_vars.work_dir }}/filebeat"
+  register: filebeat_dir
+
+- name: Create Filebeat directory only if missing
+  file:
+    path: "{{ custom_vars.work_dir }}/filebeat"
+    state: directory
+    owner: "{{ custom_vars.user }}"
+    group: "{{ custom_vars.group }}"
+    mode: "0755"
+  when: not filebeat_dir.stat.exists
+
+- name: Replace Custom filebeat-compose.yml
+  template:
+    src: filebeat-compose.j2
+    dest: "{{ custom_vars.work_dir }}/filebeat/compose.yml"
+    owner: "{{ custom_vars.user }}"
+    group: "{{ custom_vars.group }}"
+    mode: "0644"
+
+- name: Place Config filebeat.yml
+  template:
+    src: files/filebeat.yml
+    dest: "{{ custom_vars.work_dir }}/filebeat/filebeat.yml"
+    group: "{{ custom_vars.group }}"
+    mode: "0644"
+
+- name: Start ELK stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ custom_vars.work_dir }}/filebeat"
+    files:
+      - compose.yml
+    state: present
+    remove_orphans: yes

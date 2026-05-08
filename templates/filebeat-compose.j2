@@ -1,0 +1,22 @@
+---
+services:
+  filebeat:
+    image: "{{ repos.registry }}:{{ service_vars.filebeat_version }}"
+    hostname: "filebeat-{{ inventory_hostname }}"
+    container_name: filebeat
+    user: root
+    networks:
+      - "{{ service_vars.network_docker }}"
+    volumes:
+      - /var/log/audit/:/var/log/audit/
+      - /var/log/journal/:/var/log/journal/
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Asia/Tehran
+
+networks:
+  "{{ service_vars.network_docker }}":
+    external: true
+    name: "{{ service_vars.network_docker }}"

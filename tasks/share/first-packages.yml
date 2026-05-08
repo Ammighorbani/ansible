@@ -1,0 +1,62 @@
+---
+- name: System bootstrap configuration
+  become: true
+  block:
+
+    # -----------------------------
+    # Preparing Configuration
+    # -----------------------------
+    - name: Base Configuration
+      ansible.builtin.include_tasks: configs.yml
+
+    # -----------------------------
+    # Install Packages
+    # -----------------------------
+    - name: Ensure base packages are installed
+      ansible.builtin.apt:
+        name: "{{ packages | select('string') | list }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      become: true
+      retries: 3
+      delay: 10
+      until: result is succeeded
+      register: result
+
+    # -----------------------------
+    # Install Docker
+    # -----------------------------
+    - name: Check if Docker is installed
+      ansible.builtin.command: docker --version
+      register: docker_check
+      failed_when: false
+      changed_when: false
+
+    - name: Installation Docker
+      ansible.builtin.include_tasks: docker.yml
+      when: docker_check.rc != 0
+
+    # -----------------------------
+    # Install Anti Virous Trellix
+    # -----------------------------
+    #- name: Copy Trellix Binary
+    #  ansible.builtin.copy:
+    #    src: installdeb.sh
+    #    dest: /tmp/installdeb.sh
+    #    owner: root
+    #    group: root
+    #    mode: "0755"
+
+    #- name: Check if Trellix is already installed
+    #  ansible.builtin.stat:
+    #    path: /opt/McAfee/agent/bin/cmdagent
+    #  register: trellix_installed
+
+    #- name: Run Trellix installer (only if not installed)
+    #  ansible.builtin.command:
+    #    cmd: bash /tmp/installdeb.sh -i
+    #  args:
+    #    creates: /opt/McAfee/agent/bin/cmdagent
+    #  when: not trellix_installed.stat.exists
+    #  become: true

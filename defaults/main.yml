@@ -1,0 +1,47 @@
+---
+# User for deploy
+custom_vars:
+  user: deploy
+  group: devops
+  timezone: UTC
+  work_dir: "/opt/infra"
+
+# Network  Interface Vars
+network:
+  interface: "ens33"
+  address: "[your-IP]/24"
+  gateway: "[your-gateway-IP]"
+  dns: "8.8.8.8"
+
+# Repository Addresses
+repos:
+  apt_package: "http://mirror.arvancloud.ir"
+  docker_package: "https://download.docker.com/linux/debian"
+  docker_gpg: "https://download.docker.com/linux"
+  registry: https://docker.arvancloud.ir
+
+# Required Packages
+packages:
+  - vim
+  - util-linux
+  - sudo
+  - gnupg2
+  - curl
+  - dnsutils
+  - unzip
+  - ca-certificates
+  
+# Register Static Records In /etc/hosts
+hosts:
+  master_node_1: "192.168.107.2"
+
+service_vars:
+  filebeat:
+    version: 9.3.1
+  cadvisor:
+    version:
+  fluentd:
+    version:
+  node_exporter:
+    version:
+  network_docker: infra_net

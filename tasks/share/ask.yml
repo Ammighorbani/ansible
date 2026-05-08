@@ -1,0 +1,76 @@
+# -------------------------------------------------
+# Ask group action
+# -------------------------------------------------
+- name: Ask Base Services
+  pause:
+    prompt: |
+      ===================================
+      Select Type of Services:
+
+      1. Node Exporter
+      2. Cadvisor
+      3. Filebeat
+      4. Fluentd
+      5. All
+      6. Exit
+
+      Choose action (1-6):
+  register: type_services
+
+- name: Set action fact
+  set_fact:
+    group_action: "{{ type_services.user_input | trim }}"
+
+- name: Check Work Directory Exists
+  stat:
+    path: "{{ custom_vars.work_dir }}"
+  register: check_work_dir
+
+- name: Create Work directory only if missing
+  file:
+    path: "{{ custom_vars.work_dir }}"
+    state: directory
+    owner: "{{ custom_vars.user }}"
+    group: "{{ custom_vars.group }}"
+    mode: "0755"
+  when: not check_work_dir.stat.exists
+
+# -----------------------------
+# Starting Preparing Tools
+# -----------------------------
+- name: Node Exporter
+  ansible.builtin.include_tasks: node_exporter.yml
+  when: type_node.user_input | trim == '1'
+
+- name: Cadvisor
+  ansible.builtin.include_tasks: cadvisor.yml
+  when: type_node.user_input | trim == '2'
+
+- name: Filebeat
+  ansible.builtin.include_tasks: filebeat.yml
+  when: type_node.user_input | trim == '3'
+
+- name: Fluentd
+  ansible.builtin.include_tasks: fluentd.yml
+  when: type_node.user_input | trim == '4'
+
+- name: All
+  ansible.builtin.include_tasks: all_services.yml
+  when: type_node.user_input | trim == '5'
+
+- name: Exit
+  debug:
+    msg: "Goodbye!"
+  when: type_node.user_input | trim == '6'
+
+- meta: end_play
+  when: type_node.user_input | trim == ''
+
+  vars:
+    operation_map:
+      '1': 'node_exporter'
+      '2': 'cadvisor'
+      '3': 'filebeat'
+      '4': 'fluentd'
+      '5': 'all_services'
+      '6': 'exit'

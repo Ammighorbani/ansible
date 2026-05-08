@@ -1,0 +1,17 @@
+---
+- name: System Bootstraping Master Node
+  become: true
+  block:
+
+    # -----------------------------
+    # Message Start Task
+    # -----------------------------
+    - name: Start Task
+      debug:
+        msg: "✨✨✨✨ Preparing Master Node ✨✨✨✨"
+
+    - name: Base Installation
+      ansible.builtin.include_tasks: commons.yml
+
+    - name: Tools Installation
+      ansible.builtin.include_tasks: tools.yml

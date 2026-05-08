@@ -1,0 +1,11 @@
+deb [trusted=yes] {{ repos.apt_package }} bookworm main contrib non-free non-free-firmware
+deb-src [trusted=yes] {{ repos.apt_package }} bookworm main contrib non-free non-free-firmware
+
+deb [trusted=yes] {{ repos.apt_package }} bookworm-updates main contrib non-free non-free-firmware
+deb-src [trusted=yes] {{ repos.apt_package }} bookworm-updates main contrib non-free non-free-firmware
+
+deb [trusted=yes] {{ repos.apt_package }} bookworm-backports main contrib non-free non-free-firmware
+deb-src [trusted=yes] {{ repos.apt_package }} bookworm-backports main contrib non-free non-free-firmware
+
+#deb [trusted=yes] {{ repos.apt_package }}/debian-security/ bookworm-security main contrib non-free non-free-firmware
+#deb-src [trusted=yes] {{ repos.apt_package }}/debian-security/ bookworm-security main contrib non-free non-free-firmware
