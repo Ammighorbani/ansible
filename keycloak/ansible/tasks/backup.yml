@@ -13,11 +13,11 @@
         state: directory
         mode: '0755'
 
-    #----------------------------
-    # Keycloak dock compose down
-    #----------------------------
+    #------------------------------
+    # Keycloak docker compose down
+    #------------------------------
     - name: Stop docker compose stack
-      command: docker compose down
+      command: docker compose down keycloak
       args:
         chdir: "{{ project_path }}"
 
