@@ -17,7 +17,7 @@
     # Minio docker compose down
     #------------------------------
     - name: Stop docker compose stack
-      command: docker compose down keycloak
+      command: docker compose down
       args:
         chdir: "{{ project_path }}"
 
