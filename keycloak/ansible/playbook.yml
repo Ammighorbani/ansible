@@ -8,7 +8,8 @@
   
   pre_tasks:
     - name: Welcome
-      msg: "✨✨✨✨✨✨✨✨✨✨ We’re here to help you get backup of your keycloak ✨✨✨✨✨✨✨✨✨✨"
+      debug:
+        msg: "✨✨✨✨✨✨✨✨✨✨ We’re here to help you get backup of your keycloak ✨✨✨✨✨✨✨✨✨✨"
 
   tasks:
     - include_tasks: tasks/ask.yml

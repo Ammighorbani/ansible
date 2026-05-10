@@ -11,19 +11,19 @@
       2. Restore keycloak postgres database
 
       Choose action (1 / 2):
-  register: operation-type
+  register: operation_type
 
 - name: Set action fact
   set_fact:
-    group_action: "{{ operation-type.user_input | trim }}"
+    group_action: "{{ operation_type.user_input | trim }}"
 
 # --------------------------------------------
 # Starting operation keycloak backup / restore
 # --------------------------------------------
 - name: Backup keycloak database operation
-  ansible.builtin.include_tasks: baackup.yml
-  when: operation-type.user_input | trim == '1'
+  ansible.builtin.include_tasks: backup.yml
+  when: operation_type.user_input | trim == '1'
 
 - name: Restore keycloak database operation
   ansible.builtin.include_tasks: restore.yml
-  when: operation-type.user_input | trim == '2'
+  when: operation_type.user_input | trim == '2'

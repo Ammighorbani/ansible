@@ -1,8 +1,10 @@
 all:
   hosts:
     localhost:
-      ansible_host: [your-IP]
-      ansible_user: [you]
+      ansible_host: [IP]
+      ansible_user: [username]
+      ansible_port: 22
+
 
 vars:
   ansible_ssh_private_key_file: ~/.ssh/id_rsa
