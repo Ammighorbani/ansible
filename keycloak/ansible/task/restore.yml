@@ -2,59 +2,6 @@
 - name: Restore keycloak postgres database
   become: true
   block:
-    
-
-    #------------------------
-    # Check backup directory
-    #------------------------
-    - name: Ensure backup directory exists
-      file:
-        path: "{{ backup_dir }}"
-        state: directory
-        mode: '0755'
-
-    #------------------------------
-    # Keycloak docker compose down
-    #------------------------------
-    - name: Stop docker compose stack
-      command: docker compose down
-      args:
-        chdir: "{{ project_path }}"
-
-
-    #-----------------------------------
-    # Backup keycloak posrgres database
-    #-----------------------------------
-    - name: Run postgres dump container
-      shell: |
-        docker run --rm \
-        --network {{ network_name }} \
-        -e PGPASSWORD={{ db_password }} \
-        -v {{ backup_dir }}:/backup \
-        postgres:16 \
-        pg_dump -h keycloak_db -U {{ db_user }} {{ db_name }} \
-        > {{ backup_dir }}/keycloak_backup_$(date +%Y%m%d_%H%M%S).sql
-        
-      args:
-        executable: /bin/bash
-
-
-    #----------------------------
-    # Keycloak docker compose up
-    #----------------------------
-    - name: Start docker compose stack
-      command: docker compose up -d
-      args:
-        chdir: "{{ project_path }}"
-
---------------------------
-
-
-
-
-
-tasks:
-
 
     #----------------------------
     # Keycloak docker compose up
@@ -75,7 +22,7 @@ tasks:
 
 
     #-----------------------------------
-    # Backup keycloak posrgres database
+    # Restore keycloak posrgres database
     #-----------------------------------
     - name: Restore Keycloak database from backup
       shell: |
