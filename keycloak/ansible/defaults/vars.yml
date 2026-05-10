@@ -9,7 +9,7 @@ network:
 
 project_path: [project_dir]
 backup_dir: "{{ project_path }}/backup"
-network_name: keycloak_default
-db_user: keycloak
-db_name: keycloak
-db_password: your_db_password
+network_name: [network-name]
+db_user: [db-username]
+db_name: [db-name]
+db_password: [db-password]
