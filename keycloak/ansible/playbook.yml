@@ -2,41 +2,13 @@
 - name: Backup Keycloak PostgreSQL database
   hosts: all
   become: yes
+  vars_files:
+    - defaults/vars.yml
 
-  vars:
-    project_path: [project_dir]
-    backup_dir: "{{ project_path }}/backup"
-    network_name: keycloak_default
-    db_user: keycloak
-    db_name: keycloak
-    db_password: your_db_password
+  
+  pre_tasks:
+    - name: Welcome
+      msg: "✨✨✨✨✨✨✨✨✨✨ We’re here to help you get backup of your keycloak ✨✨✨✨✨✨✨✨✨✨"
 
   tasks:
-
-    - name: Ensure backup directory exists
-      file:
-        path: "{{ backup_dir }}"
-        state: directory
-        mode: '0755'
-
-    - name: Stop docker compose stack
-      command: docker compose down
-      args:
-        chdir: "{{ project_path }}"
-
-    - name: Run postgres dump container
-      shell: |
-        docker run --rm \
-        --network {{ network_name }} \
-        -e PGPASSWORD={{ db_password }} \
-        -v {{ backup_dir }}:/backup \
-        postgres:16 \
-        pg_dump -h keycloak_db -U {{ db_user }} {{ db_name }} \
-        > {{ backup_dir }}/keycloak_backup_$(date +%Y%m%d_%H%M%S).sql
-      args:
-        executable: /bin/bash
-
-    - name: Start docker compose stack
-      command: docker compose up -d
-      args:
-        chdir: "{{ project_path }}"
+    - include_tasks: tasks/ask.yml
