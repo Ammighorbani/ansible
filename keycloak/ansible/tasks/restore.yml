@@ -16,7 +16,7 @@
     # Keycloak docker compose down
     #------------------------------
     - name: Stop docker compose stack
-      command: docker compose down
+      command: docker compose down keycloak_db
       args:
         chdir: "{{ project_path }}"
 

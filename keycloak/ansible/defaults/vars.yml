@@ -13,3 +13,6 @@ network_name: [network-name]
 db_user: [db-username]
 db_name: [db-name]
 db_password: [db-password]
+
+# For restore.yml
+backup_file_name: [file_name]
