@@ -1,25 +1,47 @@
-# -------------------------------------------------
-# Ask group action
-# -------------------------------------------------
-- name: Ask Preparing Action
-  pause:
-    prompt: |
-      ===================================
-      Select Type of operation:
+---
+- name: Backup keycloak postgres database
+  become: true
+  block:
+    
 
-      1. Backup keycloak postgres database
-      2. Restore keycloak postgres database
+    #------------------------
+    # Check backup directory
+    #------------------------
+    - name: Ensure backup directory exists
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
 
-      Choose action (1 / 2):
-  register: type_operation
+    #----------------------------
+    # Keycloak dock compose down
+    #----------------------------
+    - name: Stop docker compose stack
+      command: docker compose down
+      args:
+        chdir: "{{ project_path }}"
 
-- name: Set action fact
-  set_fact:
-    group_action: "{{ type_node.user_input | trim }}"
 
-# -----------------------------
-# Starting Preparing Based On Node
-# -----------------------------
-- name: Preparing Bastion Node
-  ansible.builtin.include_tasks: bastion-node.yml
-  when: type_node.user_input | trim == '1'
+    #-----------------------------------
+    # Backup keycloak posrgres database
+    #-----------------------------------
+    - name: Run postgres dump container
+      shell: |
+        docker run --rm \
+        --network {{ network_name }} \
+        -e PGPASSWORD={{ db_password }} \
+        -v {{ backup_dir }}:/backup \
+        postgres:16 \
+        pg_dump -h keycloak_db -U {{ db_user }} {{ db_name }} \
+        > {{ backup_dir }}/keycloak_backup_$(date +%Y%m%d_%H%M%S).sql
+      args:
+        executable: /bin/bash
+
+
+    #--------------------------
+    # Keycloak dock compose up
+    #--------------------------
+    - name: Start docker compose stack
+      command: docker compose up -d
+      args:
+        chdir: "{{ project_path }}"
