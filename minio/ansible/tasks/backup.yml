@@ -31,7 +31,7 @@
           -v minio-data:/data \
           -v $(pwd)/backup:/backup \
           alpine \
-          tar czf {{ backup_dir }}/minio-full-backup-$(date +%F-%H%M).tar.gz -C /data .
+          tar czf /backup/minio-full-backup-$(date +%F-%H%M).tar.gz -C /data .
 
       args:
         executable: /bin/bash

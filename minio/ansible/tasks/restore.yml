@@ -3,15 +3,6 @@
   become: true
   block:
 
-    #------------------------------
-    # Minio docker compose down
-    #------------------------------
-    - name: Stop docker compose stack
-      command: docker compose down
-      args:
-        chdir: "{{ project_path }}"
-
-
     #--------------------------------
     # Minio volume remove and remake
     #--------------------------------
@@ -36,10 +27,10 @@
         executable: /bin/bash
 
 
-    #----------------------------
-    # Minio docker compose up
-    #----------------------------
+    #------------------------------
+    # Minio docker compose restart
+    #------------------------------
     - name: Start docker compose stack
-      command: docker compose up -d
+      command: docker compose restart
       args:
         chdir: "{{ project_path }}"
