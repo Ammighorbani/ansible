@@ -1,0 +1,46 @@
+---
+- name: Backup minio data
+  become: true
+  block:
+    
+
+    #------------------------
+    # Check backup directory
+    #------------------------
+    - name: Ensure backup directory exists
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+
+    #------------------------------
+    # Minio docker compose down
+    #------------------------------
+    - name: Stop docker compose stack
+      command: docker compose down keycloak
+      args:
+        chdir: "{{ project_path }}"
+
+
+    #-----------------------------------
+    # Backup minio posrgres database
+    #-----------------------------------
+    - name: Run backup operation
+      shell: |
+        docker run --rm \
+          -v minio-data:/data \
+          -v $(pwd)/backup:/backup \
+          alpine \
+          tar czf {{ backup_dir }}/minio-full-backup-$(date +%F-%H%M).tar.gz -C /data .
+
+      args:
+        executable: /bin/bash
+
+
+    #--------------------------
+    # Minio dock compose up
+    #--------------------------
+    - name: Start docker compose stack
+      command: docker compose up -d
+      args:
+        chdir: "{{ project_path }}"

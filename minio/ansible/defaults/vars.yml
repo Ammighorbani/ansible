@@ -1,0 +1,16 @@
+---
+# Network  Interface Vars
+network:
+  interface: "ens33"
+  address: "[IP]/[netmask]"
+  gateway: "[gateway]"
+  dns: "8.8.8.8"
+
+
+project_path: [project_dir]
+backup_dir: "{{ project_path }}/backup"
+network_name: [network-name]
+minio_volume: [volume-name]
+
+# For restore.yml
+backup_file_name: [file_name]

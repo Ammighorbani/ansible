@@ -1,0 +1,29 @@
+# -------------------------------------------------
+# Ask group action
+# -------------------------------------------------
+- name: Ask Preparing Action
+  pause:
+    prompt: |
+      ===================================
+      Select Type of operation:
+
+      1. Backup minio data
+      2. Restore minio data
+
+      Choose action (1 / 2):
+  register: operation_type
+
+- name: Set action fact
+  set_fact:
+    group_action: "{{ operation_type.user_input | trim }}"
+
+# --------------------------------------------
+# Starting operation minio backup / restore
+# --------------------------------------------
+- name: Backup minio data operation
+  ansible.builtin.include_tasks: backup.yml
+  when: operation_type.user_input | trim == '1'
+
+- name: Restore minio data operation
+  ansible.builtin.include_tasks: restore.yml
+  when: operation_type.user_input | trim == '2'

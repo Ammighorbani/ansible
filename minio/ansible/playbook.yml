@@ -1,0 +1,15 @@
+---
+- name: Backup minio data
+  hosts: all
+  become: yes
+  vars_files:
+    - defaults/vars.yml
+
+  
+  pre_tasks:
+    - name: Welcome
+      debug:
+        msg: "✨✨✨✨✨✨✨✨✨✨ We’re here to help you get backup of your minio ✨✨✨✨✨✨✨✨✨✨"
+
+  tasks:
+    - include_tasks: tasks/ask.yml

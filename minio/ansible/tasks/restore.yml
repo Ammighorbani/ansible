@@ -1,0 +1,45 @@
+---
+- name: Restore minio data
+  become: true
+  block:
+
+    #------------------------------
+    # Minio docker compose down
+    #------------------------------
+    - name: Stop docker compose stack
+      command: docker compose down
+      args:
+        chdir: "{{ project_path }}"
+
+
+    #--------------------------------
+    # Minio volume remove and remake
+    #--------------------------------
+    - name: Stop docker compose stack
+      command: docker volume rm {{ minio_volume }} && docker volume create {{ minio_volume }}
+      args:
+        chdir: "{{ project_path }}"
+
+
+    #-----------------------------------
+    # Restore minio posrgres database
+    #-----------------------------------
+    - name: Restore minio data from backup
+      shell: |
+        docker run --rm \
+          -v minio-data:/data \
+          -v $(pwd):/backup \
+          alpine \
+          tar xzf {{ backup_dir }}/{{ backup_file_name }} -C /data
+
+      args:
+        executable: /bin/bash
+
+
+    #----------------------------
+    # Minio docker compose up
+    #----------------------------
+    - name: Start docker compose stack
+      command: docker compose up -d
+      args:
+        chdir: "{{ project_path }}"
