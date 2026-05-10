@@ -1,0 +1,25 @@
+# -------------------------------------------------
+# Ask group action
+# -------------------------------------------------
+- name: Ask Preparing Action
+  pause:
+    prompt: |
+      ===================================
+      Select Type of operation:
+
+      1. Backup keycloak postgres database
+      2. Restore keycloak postgres database
+
+      Choose action (1 / 2):
+  register: type_operation
+
+- name: Set action fact
+  set_fact:
+    group_action: "{{ type_node.user_input | trim }}"
+
+# -----------------------------
+# Starting Preparing Based On Node
+# -----------------------------
+- name: Preparing Bastion Node
+  ansible.builtin.include_tasks: bastion-node.yml
+  when: type_node.user_input | trim == '1'

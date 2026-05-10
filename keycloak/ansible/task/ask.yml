@@ -1,0 +1,29 @@
+# -------------------------------------------------
+# Ask group action
+# -------------------------------------------------
+- name: Ask Preparing Action
+  pause:
+    prompt: |
+      ===================================
+      Select Type of operation:
+
+      1. Backup keycloak postgres database
+      2. Restore keycloak postgres database
+
+      Choose action (1 / 2):
+  register: operation-type
+
+- name: Set action fact
+  set_fact:
+    group_action: "{{ operation-type.user_input | trim }}"
+
+# --------------------------------------------
+# Starting operation keycloak backup / restore
+# --------------------------------------------
+- name: Backup keycloak database operation
+  ansible.builtin.include_tasks: baackup.yml
+  when: operation-type.user_input | trim == '1'
+
+- name: Restore keycloak database operation
+  ansible.builtin.include_tasks: restore.yml
+  when: operation-type.user_input | trim == '2'
