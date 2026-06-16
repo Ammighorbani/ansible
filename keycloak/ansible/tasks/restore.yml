@@ -16,10 +16,25 @@
     # Keycloak docker compose down
     #------------------------------
     - name: Stop docker compose stack
-      command: docker compose down keycloak_db
+      command: docker compose down keycloak
       args:
         chdir: "{{ project_path }}"
 
+    #-------------------------------
+    # Keycloak docker database drop
+    #-------------------------------
+    - name: Drop database
+      command: docker exec -i keycloak_db psql -U {{ db_user }} -d {{ db_name }} -c "DROP DATABASE IF EXISTS keycloak;"
+      args:
+        chdir: "{{ project_path }}"
+
+    #-------------------------------
+    # Keycloak docker database remake
+    #-------------------------------
+    - name: Drop database
+      command: docker exec -i keycloak_db psql -U {{ db_user }} -d {{ db_name }} -c "CREATE DATABASE keycloak;"
+      args:
+        chdir: "{{ project_path }}"
 
     #-----------------------------------
     # Restore keycloak posrgres database

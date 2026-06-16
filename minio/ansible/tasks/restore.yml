@@ -21,7 +21,7 @@
           -v minio-data:/data \
           -v $(pwd):/backup \
           alpine \
-          tar xzf {{ backup_dir }}/{{ backup_file_name }} -C /data
+          tar xzf backup/{{ backup_file_name }} -C /data
 
       args:
         executable: /bin/bash
