@@ -1,6 +1,6 @@
 all:
   hosts:
-    master-node1:
+    devops:
       ansible_host: 192.168.107.160
       ansible_user: ammi
       ansible_port: 2222

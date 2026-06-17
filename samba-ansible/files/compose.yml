@@ -16,6 +16,13 @@ services:
       SAMBA_DNS_FORWARDER: 8.8.8.8
 
     volumes:
-      - /root/samba-dc/data/lib:/var/lib/samba
-      - /root/samba-dc/data/etc:/etc/samba
-      - /root/samba-dc/data/run:/var/run/samba
+      - samba_lib:/var/lib/samba
+      - samba_etc:/etc/samba
+      - samba_run:/var/run/samba
+      - samba_shares:/shares
+
+volumes:
+  samba_lib:
+  samba_etc:
+  samba_run:
+  samba_shares:

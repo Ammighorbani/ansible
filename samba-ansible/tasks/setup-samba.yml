@@ -28,7 +28,6 @@
         state: absent
 
 
-
     - name: Set temporary DNS
       copy:
         dest: /etc/resolv.conf
@@ -49,8 +48,6 @@
         create: yes
 
 
-
-
     - name: Create samba directory
       file:
         path: "{{ samba_dir }}/data/{{ item }}"
@@ -62,14 +59,10 @@
         - run
 
 
-
-
     - name: Copy Dockerfile
       copy:
         src: Dockerfile
         dest: "{{ samba_dir }}/Dockerfile"
-
-
 
 
     - name: Copy entrypoint
@@ -78,10 +71,12 @@
         dest: "{{ samba_dir }}/entrypoint.sh"
         mode: "0755"
 
+
     - name: Copy docker-compose
       copy:
         src: compose.yml
         dest: "{{ samba_dir }}/docker-compose.yml"
+
 
     - name: Build and start samba container
       command: docker compose up -d --build

@@ -13,3 +13,4 @@
 
   tasks:
     - include_tasks: tasks/ask.yml
+    - include_tasks: tasks/samba-dns-cleanup.yml
