@@ -5,10 +5,12 @@ networks:
     external: true
     name: web_net
 
-
 services:
   n8n:
-    image: n8nio/n8n:{{ n8n_version }}
+    build:
+      context: /root/n8n
+      dockerfile: Dockerfile
+    image: custom-n8n-python:{{ n8n_version }}
     container_name: n8n
     restart: unless-stopped
     ports:
@@ -29,5 +31,6 @@ services:
       - N8N_SECURE_COOKIE=false
     volumes:
       - {{ n8n_data_path }}:/home/node/.n8n
+      - /root/n8n/scripts:/scripts
     networks:
       - web_net

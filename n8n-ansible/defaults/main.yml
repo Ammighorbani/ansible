@@ -11,7 +11,7 @@ hostname_name: fpe-n8n
 # Network  Interface Vars
 network:
   interface: "ens3"
-  address: "192.168.107160/24"
+  address: "192.168.107.160/24"
   gateway: "192.168.107.254"
   dns: "8.8.8.8"
 

@@ -78,18 +78,23 @@
         dest: /root/n8n/.env
         mode: '0600'
 
+    - name: Create Dockerfile file
+      template:
+        src: /root/n8n-ansible/templates/Dockerfile.j2
+        dest: /root/n8n/Dockerfile
+        mode: '0600'
+
     - name: Create docker-compose file
       template:
         src: /root/n8n-ansible/templates/docker-compose.yml.j2
         dest: /root/n8n/docker-compose.yml
         mode: '0644'
 
-    - name: Start n8n with Docker Compose
-      command: docker compose up -d
+    - name: Build and start n8n container
+      command: docker compose up -d --build
       args:
         chdir: /root/n8n
       register: docker_compose_result
-
 
     - name: Display n8n information
       debug:
@@ -99,8 +104,4 @@
           - "Username: {{ n8n_basic_auth_user }}"
           - "Password: {{ n8n_basic_auth_password }}"
           - "Data directory: {{ n8n_data_path }}"
-
-    - name: Build and start n8n container
-      command: docker compose up -d --build
-      args:
-        chdir: "{{ n8n_data_path }}"
+          - "Python is installed inside the custom n8n container."
