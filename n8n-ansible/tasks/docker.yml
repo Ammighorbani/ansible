@@ -5,17 +5,17 @@
     # -----------------------------
     # Add Docker GPG key
     # -----------------------------
-    - name: Create keyrings directory
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: "0755"
+    #- name: Create keyrings directory
+    #  ansible.builtin.file:
+    #    path: /etc/apt/keyrings
+    #    state: directory
+    #    mode: "0755"
 
-    - name: Download Docker GPG key
-      ansible.builtin.get_url:
-        url: "{{ repos.docker_gpg }}/{{ ansible_distribution | lower }}/gpg"
-        dest: /etc/apt/keyrings/docker.asc
-        mode: "0644"
+    #- name: Download Docker GPG key
+    #  ansible.builtin.get_url:
+    #    url: "{{ repos.docker_gpg }}/{{ ansible_distribution | lower }}/gpg"
+    #    dest: /etc/apt/keyrings/docker.asc
+    #    mode: "0644"
 
     - name: Get architecture
       command: dpkg --print-architecture

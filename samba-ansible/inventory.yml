@@ -1,9 +1,9 @@
 all:
   hosts:
-    devops:
-      ansible_host: 192.168.107.160
+    file-ubuntu-server:
+      ansible_host: 192.168.10.7
       ansible_user: ammi
-      ansible_port: 2222
+      ansible_port: 22
 
   vars:
     ansible_ssh_private_key_file: ~/.ssh/id_rsa

@@ -9,8 +9,8 @@ custom_vars:
 # Network  Interface Vars
 network:
   interface: "ens3"
-  address: "192.168.107160/24"
-  gateway: "192.168.107.254"
+  address: "192.168.10.7/24"
+  gateway: "192.168.10.254"
   dns: "8.8.8.8"
 
 
@@ -22,9 +22,9 @@ domain: FPE
 realm: FPE.LOCAL
 
 dns_forwarder: 8.8.8.8
-server_ip: 192.168.107.160
+server_ip: 192.168.10.7
 
-admin_password: "Admin@12345"
+admin_password: "Energy1361FPE"
 
 username: r.esfandiari
 password: "123456Aa"
@@ -51,7 +51,7 @@ packages:
   
 # Register Static Records In /etc/hosts
 hosts:
-  fpe-smaba: "192.168.107.160"
+  file-ubuntu-server: "192.168.10.7"
 
 service_vars:
   filebeat:

@@ -10,12 +10,12 @@ hostname_name: fpe-n8n
 
 # Network  Interface Vars
 network:
-  interface: "ens3"
-  address: "192.168.107.160/24"
+  interface: "ens160"
+  address: "192.168.10.7/24"
   gateway: "192.168.107.254"
   dns: "8.8.8.8"
 
-server_ip: 192.168.107.160
+server_ip: 192.168.10.7
 
 playbook_dir: /root/n8n-ansible
 
@@ -34,14 +34,14 @@ use_ssl: false
 # n8n Auth
 n8n_basic_auth_active: true
 n8n_basic_auth_user: "admin"
-n8n_basic_auth_password: "Admin@12345"
+n8n_basic_auth_password: "Energy@1361@FPE"
   
 
 # Repository Addresses
 repos:
-  apt_package: "http://pbr.amertka.com/ubuntu"
-  docker_package: "https://pbr.amertka.com/linux/ubuntu"
-  docker_gpg: "https://pbr.amertka.com/rawhub/"
+  apt_package: "http://mirror.arvancloud.ir/ubuntu"
+  docker_package: "https://mirror.arvancloud.ir/linux/ubuntu"
+  docker_gpg: "https://mirror.arvancloud.ir/rawhub/"
   registry: https://pcr.amertka.com
 
 # Required Packages
@@ -57,7 +57,7 @@ packages:
   
 # Register Static Records In /etc/hosts
 hosts:
-  fpe-n8n: "192.168.107.160"
+  file-ubuntu-server: "192.168.10.7"
 
 service_vars:
   filebeat:

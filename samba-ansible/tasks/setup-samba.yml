@@ -82,3 +82,11 @@
       command: docker compose up -d --build
       args:
         chdir: "{{ samba_dir }}"
+
+    - name: Wait for Samba AD DC to fully initialize
+      command: docker exec samba-ad-dc samba-tool domain info 127.0.0.1
+      register: samba_ready
+      retries: 15
+      delay: 10
+      until: samba_ready.rc == 0
+      changed_when: false

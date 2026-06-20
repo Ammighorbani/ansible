@@ -71,17 +71,34 @@
         - /root/n8n
         - "{{ n8n_data_path }}"
 
+    - name: Create python runner directory
+      file:
+        path: /root/n8n/python-runner
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Create python runner Dockerfile
+      template:
+        src: /root/n8n-ansible/templates/python-runner.Dockerfile.j2
+        dest: /root/n8n/python-runner/Dockerfile
+        mode: '0644'
+        owner: root
+        group: root
+
+    - name: Create python runner app file
+      template:
+        src: /root/n8n-ansible/templates/app.py.j2
+        dest: /root/n8n/python-runner/app.py
+        mode: '0644'
+        owner: root
+        group: root
 
     - name: Create .env file
       template:
         src: /root/n8n-ansible/templates/env.j2
         dest: /root/n8n/.env
-        mode: '0600'
-
-    - name: Create Dockerfile file
-      template:
-        src: /root/n8n-ansible/templates/Dockerfile.j2
-        dest: /root/n8n/Dockerfile
         mode: '0600'
 
     - name: Create docker-compose file

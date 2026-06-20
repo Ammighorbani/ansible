@@ -7,10 +7,7 @@ networks:
 
 services:
   n8n:
-    build:
-      context: /root/n8n
-      dockerfile: Dockerfile
-    image: custom-n8n-python:{{ n8n_version }}
+    image: n8nio/n8n:{{ n8n_version }}
     container_name: n8n
     restart: unless-stopped
     ports:
@@ -32,5 +29,17 @@ services:
     volumes:
       - {{ n8n_data_path }}:/home/node/.n8n
       - /root/n8n/scripts:/scripts
+    networks:
+      - web_net
+
+  python_runner:
+    build:
+      context: /root/n8n/python-runner
+      dockerfile: Dockerfile
+    image: custom-python-runner:latest
+    container_name: python-runner
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
     networks:
       - web_net
