@@ -14,6 +14,7 @@ services:
       SAMBA_DOMAIN: FPE
       SAMBA_ADMIN_PASSWORD: "Admin@12345"
       SAMBA_DNS_FORWARDER: 8.8.8.8
+      SAMBA_LAN_IP: "{{ server_ip }}"
 
     volumes:
       - samba_lib:/var/lib/samba
