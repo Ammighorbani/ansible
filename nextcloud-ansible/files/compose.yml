@@ -19,7 +19,7 @@ services:
     container_name: nextcloud-app
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     links:
       - db
     depends_on:

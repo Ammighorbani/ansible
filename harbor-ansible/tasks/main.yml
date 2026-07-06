@@ -1,5 +1,5 @@
 ---
-- name: Setup Samba AD DC with Docker
+- name: Setup Harbor with Docker
   become: yes
   block:
 
@@ -47,38 +47,14 @@
         line: "{{ ip }} {{ hostname_name }} {{ hostname_name.split('.')[0] }}"
         create: yes
 
+    - name: Sub-task 1 - Install Prerequisites and Docker Configuration
+      include_tasks: prerequisites.yml
 
-    - name: Create nextcloud directory
-      file:
-        path: "{{ nextcloud_dir }}/data/{{ item }}"
-        state: directory
-        recurse: yes
-      loop:
-        - lib
-        - etc
-        - run
-
-
-    - name: Copy Dockerfile
-      copy:
-        src: Dockerfile
-        dest: "{{ nextcloud_dir }}/Dockerfile"
-
-
-    - name: Copy entrypoint
-      copy:
-        src: entrypoint.sh
-        dest: "{{ nextcloud_dir }}/entrypoint.sh"
-        mode: "0755"
-
-
-    - name: Copy docker-compose
-      copy:
-        src: compose.yml
-        dest: "{{ nextcloud_dir }}/compose.yml"
-
-
-    - name: Build and start nextcloud container
-      command: docker compose up -d --build
-      args:
-        chdir: "{{ nextcloud_dir }}"
+    - name: Sub-task 2 - Download and Extract Harbor Offline Installer
+      include_tasks: download.yml
+    
+    - name: Sub-task 3 - Generate Configurations (harbor.yml & daemon.json)
+      include_tasks: configure.yml
+    
+    - name: Sub-task 4 - Run Installer and Start Services
+      include_tasks: start.yml

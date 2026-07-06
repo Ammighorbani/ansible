@@ -7,9 +7,12 @@
       ===================================
       Select Type of Node:
 
-      1. Install Nextcloud
-      2. Config extra disk
-      3. Exit
+      1. Install Harbor & Run Harbor
+      2. Install Prerequisites
+      3. Download Harbor Project
+      4. Generate Harbor configurations
+      5. Run Harbor
+      6. Exit
 
       Choose action (1-4):
   register: type_node
@@ -21,18 +24,30 @@
 # -----------------------------
 # Starting Preparing Based On Node
 # -----------------------------
-- name: Preparing Setup Nextcloud
-  ansible.builtin.include_tasks: setup-nextcloud.yml
+- name: Preparing Setup Harbor
+  ansible.builtin.include_tasks: main.yml
   when: type_node.user_input | trim == '1'
 
-- name: Preparing Setup Nextcloud
-  ansible.builtin.include_tasks: nextcloud-extra-disk.yml
+- name: Install Prerequisites
+  ansible.builtin.include_tasks: prerequisites.yml
   when: type_node.user_input | trim == '2'
 
+- name: Download Harbor Project
+  ansible.builtin.include_tasks: download.yml
+  when: type_node.user_input | trim == '3'
+
+- name: Generate Harbor configurations
+  ansible.builtin.include_tasks: configure.yml
+  when: type_node.user_input | trim == '4'
+
+- name: Run Harbor With Docker
+  ansible.builtin.include_tasks: start.yml
+  when: type_node.user_input | trim == '5'
+  
 - name: Exit
   debug:
     msg: "Goodbye!"
-  when: type_node.user_input | trim == '3'
+  when: type_node.user_input | trim == '6'
 
 - meta: end_play
   when: type_node.user_input | trim == ''

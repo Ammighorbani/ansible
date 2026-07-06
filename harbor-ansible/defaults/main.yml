@@ -8,14 +8,14 @@ custom_vars:
 
 # Network  Interface Vars
 network:
-  interface: "ens3"
-  address: "192.168.10.7/24"
-  gateway: "192.168.10.254"
+  interface: "ens33"
+  address: "192.168.107.159/24"
+  gateway: "192.168.107.2"
   dns: "8.8.8.8"
 
-# Nextcloud settings
-nextcloud_dir: "nextcloud"
-ip: "192.168.10.7"
+# Harbor settings
+ip: "192.168.107.159"
+hostname_name: devops
 
 # Repository Addresses
 repos:
@@ -37,7 +37,7 @@ packages:
   
 # Register Static Records In /etc/hosts
 hosts:
-  file-ubuntu-server: "192.168.10.7"
+  devops: "192.168.107.159"
 
 service_vars:
   filebeat:
