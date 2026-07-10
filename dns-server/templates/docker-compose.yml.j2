@@ -1,0 +1,40 @@
+services:
+  bind9:
+    image: "{{ dns_image }}"
+    container_name: "{{ dns_container_name }}"
+    hostname: "{{ dns_container_name }}"
+    restart: always
+    user: root
+
+    ports:
+      - "{{ dns_listen_ip }}:53:53/tcp"
+      - "{{ dns_listen_ip }}:53:53/udp"
+
+    environment:
+      TZ: "UTC"
+      BIND9_USER: "root"
+
+    volumes:
+      - "{{ dns_docker_project_dir }}/config/named.conf.options:/etc/bind/named.conf.options:ro"
+      - "{{ dns_docker_project_dir }}/config/named.conf.local:/etc/bind/named.conf.local:ro"
+      - "{{ dns_docker_project_dir }}/records:/var/lib/bind"
+      - "{{ dns_docker_project_dir }}/cache:/var/cache/bind"
+
+    healthcheck:
+      test: ["CMD-SHELL", "named-checkconf /etc/bind/named.conf && pidof named >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    deploy:
+      resources:
+        limits:
+          cpus: "{{ dns_container_cpu_limit }}"
+          memory: "{{ dns_container_memory_limit }}"
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

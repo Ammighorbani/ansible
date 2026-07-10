@@ -1,0 +1,113 @@
+---
+# User for deploy
+custom_vars:
+  user: deploy
+  group: devops
+  timezone: Etc/UTC
+  work_dir: "/opt/infra"
+
+# Network  Interface Vars
+network:
+  interface: "ens3"
+  address: "192.168.10.18/24"
+  gateway: "192.168.10.254"
+  dns: "8.8.8.8"
+
+
+# DNS Server Settings
+
+dns_zone_name: "fpe.com"
+dns_zone_file: "db.fpe.com"
+
+dns_server_ip: "192.168.10.18"
+dns_listen_ip: "192.168.10.18"
+dns_network_cidr: "192.168.10.0/24"
+
+dns_reverse_zone_name: "10.168.192.in-addr.arpa"
+dns_reverse_zone_file: "db.192.168.10"
+
+dns_forwarders:
+  - "1.1.1.1"
+  - "8.8.8.8"
+
+dns_records:
+  - name: "files"
+    type: "A"
+    value: "192.168.10.7"
+
+  - name: "n8n"
+    type: "A"
+    value: "192.168.10.9"
+
+  - name: "monitoring"
+    type: "A"
+    value: "192.168.10.11"
+
+  - name: "ntp"
+    type: "A"
+    value: "192.168.10.19"
+
+  - name: "ntp"
+    type: "A"
+    value: "192.168.10.18"
+
+dns_ptr_records:
+  - ip: "192.168.10.7"
+    host: "files.fpe.com"
+
+  - ip: "192.168.10.9"
+    host: "n8n.fpe.com"
+
+  - ip: "192.168.10.11"
+    host: "monitoring.fpe.com"
+
+  - ip: "192.168.10.19"
+    host: "ntp.fpe.com"
+
+  - ip: "192.168.10.18"
+    host: "ntp.fpe.com"
+
+dns_docker_project_dir: "/opt/dns-bind9"
+dns_container_name: "bind9"
+dns_image: "ubuntu/bind9:9.18-24.04_beta"
+dns_timezone: "Asia/Tehran"
+
+dns_zone_serial: "2026071001"
+dns_reverse_zone_serial: "2026071001"
+
+dns_container_cpu_limit: "1.0"
+dns_container_memory_limit: "1024M"
+
+
+# Repository Addresses
+repos:
+  apt_package: "http://pbr.amertka.com/ubuntu"
+  docker_package: "https://pbr.amertka.com/linux/ubuntu"
+  docker_gpg: "https://pbr.amertka.com/rawhub/"
+  registry: https://pcr.amertka.com
+
+# Required Packages
+packages:
+  - vim
+  - util-linux
+  - sudo
+  - gnupg
+  - curl
+  - dnsutils
+  - unzip
+  - ca-certificates
+  
+# Register Static Records In /etc/hosts
+hosts:
+  NTP-DNS-server-2: "192.168.10.18"
+
+service_vars:
+  filebeat:
+    version: 9.3.1
+  cadvisor:
+    version:
+  fluentd:
+    version:
+  node_exporter:
+    version:
+  network_docker: infra_net

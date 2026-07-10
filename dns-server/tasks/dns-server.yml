@@ -1,0 +1,235 @@
+---
+- name: DNS | Stop local DNS services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - bind9
+    - named
+    - dnsmasq
+  failed_when: false
+
+- name: DNS | Create project root directory
+  ansible.builtin.file:
+    path: "{{ dns_docker_project_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: DNS | Create configuration and records directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ dns_docker_project_dir }}/config"
+    - "{{ dns_docker_project_dir }}/records"
+
+- name: DNS | Create writable cache directory
+  ansible.builtin.file:
+    path: "{{ dns_docker_project_dir }}/cache"
+    state: directory
+    owner: root
+    group: root
+    mode: "0777"
+
+- name: DNS | Deploy named.conf.options
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: "{{ dns_docker_project_dir }}/config/named.conf.options"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: DNS | Deploy named.conf.local
+  ansible.builtin.template:
+    src: named.conf.local.j2
+    dest: "{{ dns_docker_project_dir }}/config/named.conf.local"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: DNS | Deploy forward zone file
+  ansible.builtin.template:
+    src: db.zone.j2
+    dest: "{{ dns_docker_project_dir }}/records/{{ dns_zone_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: DNS | Deploy reverse zone file
+  ansible.builtin.template:
+    src: db.reverse.j2
+    dest: "{{ dns_docker_project_dir }}/records/{{ dns_reverse_zone_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: DNS | Deploy Docker Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ dns_docker_project_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: DNS | Ensure configuration directory permissions
+  ansible.builtin.file:
+    path: "{{ dns_docker_project_dir }}/config"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+    recurse: true
+
+- name: DNS | Ensure records directory permissions
+  ansible.builtin.file:
+    path: "{{ dns_docker_project_dir }}/records"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+    recurse: true
+
+- name: DNS | Find configuration files
+  ansible.builtin.find:
+    paths: "{{ dns_docker_project_dir }}/config"
+    file_type: file
+    recurse: true
+  register: dns_config_files
+
+- name: DNS | Make configuration files readable
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ dns_config_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: DNS | Find zone files
+  ansible.builtin.find:
+    paths: "{{ dns_docker_project_dir }}/records"
+    file_type: file
+    recurse: true
+  register: dns_zone_files
+
+- name: DNS | Make zone files readable
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ dns_zone_files.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: DNS | Ensure cache directory is writable
+  ansible.builtin.file:
+    path: "{{ dns_docker_project_dir }}/cache"
+    state: directory
+    owner: root
+    group: root
+    mode: "0777"
+    recurse: true
+
+- name: DNS | Validate generated Docker Compose file
+  ansible.builtin.command:
+    cmd: docker compose config --quiet
+    chdir: "{{ dns_docker_project_dir }}"
+  register: dns_compose_validation
+  changed_when: false
+
+- name: DNS | Remove existing DNS container
+  ansible.builtin.command:
+    cmd: docker compose down --remove-orphans
+    chdir: "{{ dns_docker_project_dir }}"
+  register: dns_compose_down
+  changed_when: >-
+    'Removed' in dns_compose_down.stdout or
+    'Stopped' in dns_compose_down.stdout or
+    'Removing' in dns_compose_down.stderr
+  failed_when: false
+
+- name: DNS | Start DNS container with updated configuration
+  ansible.builtin.command:
+    cmd: docker compose up -d --force-recreate
+    chdir: "{{ dns_docker_project_dir }}"
+  register: dns_compose_up
+  changed_when: true
+
+- name: DNS | Wait for container startup
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: DNS | Get DNS container status
+  ansible.builtin.command:
+    cmd: >-
+      docker inspect
+      --format={{ '{{' }}.State.Status{{ '}}' }}
+      {{ dns_container_name }}
+  register: dns_container_status
+  changed_when: false
+  failed_when: false
+
+- name: DNS | Get DNS container restart count
+  ansible.builtin.command:
+    cmd: >-
+      docker inspect
+      --format={{ '{{' }}.RestartCount{{ '}}' }}
+      {{ dns_container_name }}
+  register: dns_container_restart_count
+  changed_when: false
+  failed_when: false
+
+- name: DNS | Show DNS container information
+  ansible.builtin.debug:
+    msg:
+      - "Container: {{ dns_container_name }}"
+      - "Status: {{ dns_container_status.stdout | default('unknown') }}"
+      - "Restart count: {{ dns_container_restart_count.stdout | default('unknown') }}"
+
+- name: DNS | Read container logs when startup failed
+  ansible.builtin.command:
+    cmd: docker logs --tail 100 {{ dns_container_name }}
+  register: dns_failed_container_logs
+  changed_when: false
+  failed_when: false
+  when:
+    - dns_container_status.stdout | default('unknown') not in ['running']
+
+- name: DNS | Show container error logs
+  ansible.builtin.debug:
+    var: dns_failed_container_logs.stderr_lines
+  when:
+    - dns_container_status.stdout | default('unknown') not in ['running']
+    - dns_failed_container_logs is defined
+
+- name: DNS | Fail when DNS container is not running
+  ansible.builtin.fail:
+    msg: >-
+      DNS container failed to start.
+      Current status:
+      {{ dns_container_status.stdout | default('unknown') }}.
+      Check the container logs printed above.
+  when:
+    - dns_container_status.stdout | default('unknown') not in ['running']
+
+- name: DNS | Show running DNS container
+  ansible.builtin.command:
+    cmd: >-
+      docker ps
+      --filter name={{ dns_container_name }}
+      --format
+      {% raw %}"table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"{% endraw %}
+  register: dns_docker_ps
+  changed_when: false
+
+- name: DNS | Print DNS container status
+  ansible.builtin.debug:
+    var: dns_docker_ps.stdout_lines

@@ -1,0 +1,45 @@
+# -------------------------------------------------
+# Ask group action
+# -------------------------------------------------
+- name: Ask Preparing Action
+  pause:
+    prompt: |
+      ===================================
+      Select Type of Node:
+
+      1. Install DNS server
+      2. Add New DNS Record
+      3. Exit
+
+      Choose action (1-4):
+  register: type_node
+
+- name: Set action fact
+  set_fact:
+    group_action: "{{ type_node.user_input | trim }}"
+
+# -----------------------------
+# Starting Preparing Based On Node
+# -----------------------------
+- name: Preparing Full Monitoring Stack
+  ansible.builtin.include_tasks: dns-server.yml
+  when: type_node.user_input | trim == '1'
+
+- name: Preparing Grafana Stack
+  ansible.builtin.include_tasks: add-dns.yml
+  when: type_node.user_input | trim == '2'
+
+- name: Exit
+  debug:
+    msg: "Goodbye!"
+  when: type_node.user_input | trim == '3'
+
+- meta: end_play
+  when: type_node.user_input | trim == ''
+
+  vars:
+    operation_map:
+      '1': 'bastion'
+      '2': 'master'
+      '3': 'worker'
+      '4': 'exit'

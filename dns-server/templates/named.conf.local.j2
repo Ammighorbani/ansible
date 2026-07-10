@@ -1,0 +1,9 @@
+zone "{{ dns_zone_name }}" {
+    type master;
+    file "/etc/bind/{{ dns_zone_file }}";
+};
+
+zone "{{ dns_reverse_zone_name }}" {
+    type master;
+    file "/etc/bind/{{ dns_reverse_zone_file }}";
+};
