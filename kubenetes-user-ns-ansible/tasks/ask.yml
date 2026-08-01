@@ -1,0 +1,50 @@
+# -------------------------------------------------
+# Ask group action
+# -------------------------------------------------
+- name: Ask Preparing Action
+  pause:
+    prompt: |
+      ===================================
+      Select Type of Node:
+
+      1. Create k8s User
+      2. Create k8s Namespace
+      3. Grant k8s User to Namespace Access
+      4. Exit
+
+      Choose action (1-4):
+  register: type_node
+
+- name: Set action fact
+  set_fact:
+    group_action: "{{ type_node.user_input | trim }}"
+
+# -----------------------------
+# Starting Preparing Based On Node
+# -----------------------------
+- name: Preparing Bastion Node
+  ansible.builtin.include_tasks: create_k8s_user.yml
+  when: type_node.user_input | trim == '1'
+
+- name: Preparing Master Node
+  ansible.builtin.include_tasks: create_k8s_namespace.yml
+  when: type_node.user_input | trim == '2'
+
+- name: Preparing Worker Node
+  ansible.builtin.include_tasks: grant_k8s_user_namespace_access.yml
+  when: type_node.user_input | trim == '3'
+
+- name: Exit
+  debug:
+    msg: "Goodbye!"
+  when: type_node.user_input | trim == '4'
+
+- meta: end_play
+  when: type_node.user_input | trim == ''
+
+  vars:
+    operation_map:
+      '1': 'bastion'
+      '2': 'master'
+      '3': 'worker'
+      '4': 'exit'

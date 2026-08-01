@@ -1,0 +1,40 @@
+---
+# Subtask: Create a namespace using kubectl and verify it exists.
+
+- name: Prompt for namespace name
+  ansible.builtin.pause:
+    prompt: "Enter namespace name to create"
+  register: k8s_create_ns_prompt
+
+- name: Set namespace name from input
+  ansible.builtin.set_fact:
+    k8s_new_namespace: "{{ k8s_create_ns_prompt.user_input | trim }}"
+
+- name: Fail if namespace name is empty
+  ansible.builtin.fail:
+    msg: "Namespace name cannot be empty."
+  when: k8s_new_namespace | length == 0
+
+- name: Resolve admin kubeconfig for cluster operations
+  ansible.builtin.set_fact:
+    k8s_admin_kubeconfig: "{{ k8s_admin_kubeconfig | default(lookup('env', 'HOME') + '/.kube/config', true) }}"
+
+- name: Create namespace
+  ansible.builtin.command:
+    cmd: kubectl create ns "{{ k8s_new_namespace }}"
+  environment:
+    KUBECONFIG: "{{ k8s_admin_kubeconfig }}"
+  register: k8s_ns_create_result
+  changed_when: "'created' in k8s_ns_create_result.stdout | lower"
+  failed_when: k8s_ns_create_result.rc != 0 and ('AlreadyExists' not in k8s_ns_create_result.stderr)
+
+- name: List namespaces and filter by name
+  ansible.builtin.shell: kubectl get ns | grep "{{ k8s_new_namespace }}"
+  environment:
+    KUBECONFIG: "{{ k8s_admin_kubeconfig }}"
+  register: k8s_ns_grep
+  changed_when: false
+
+- name: Show namespace verification output
+  ansible.builtin.debug:
+    var: k8s_ns_grep.stdout_lines

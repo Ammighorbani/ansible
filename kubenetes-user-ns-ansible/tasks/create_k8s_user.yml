@@ -1,0 +1,50 @@
+---
+# Subtask: Create a new Kubernetes user and a dedicated kubeconfig file.
+# Username is collected interactively. Admin operations use k8s_admin_kubeconfig only.
+
+- name: Prompt for new Kubernetes username
+  ansible.builtin.pause:
+    prompt: "Enter username for the new Kubernetes user"
+  register: k8s_create_user_prompt
+
+- name: Set new username from input
+  ansible.builtin.set_fact:
+    k8s_new_username: "{{ k8s_create_user_prompt.user_input | trim }}"
+
+- name: Fail if username is empty
+  ansible.builtin.fail:
+    msg: "Username cannot be empty."
+  when: k8s_new_username | length == 0
+
+# Admin kubeconfig path — never write to this file when creating another user.
+- name: Resolve admin kubeconfig path
+  ansible.builtin.set_fact:
+    k8s_admin_kubeconfig: "{{ k8s_admin_kubeconfig | default(lookup('env', 'HOME') + '/.kube/config', true) }}"
+    k8s_user_kubeconfig_path: "/root/{{ k8s_new_username }}.kubeconfig"
+
+# TODO: Replace the block below with your existing user-provisioning steps.
+# Requirements: write ONLY to k8s_user_kubeconfig_path; do not modify k8s_admin_kubeconfig or ~/.kube/config.
+- name: Provision Kubernetes user and generate dedicated kubeconfig
+  ansible.builtin.shell: |
+    set -euo pipefail
+    # Example placeholder — implement cert/CSR/SA token flow here.
+    test -f "{{ k8s_admin_kubeconfig }}"
+    # ... your commands ...
+    touch "{{ k8s_user_kubeconfig_path }}"
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: "{{ k8s_admin_kubeconfig }}"
+  changed_when: true
+
+- name: Read new user kubeconfig for display
+  ansible.builtin.slurp:
+    src: "{{ k8s_user_kubeconfig_path }}"
+  register: k8s_user_kubeconfig_slurp
+
+- name: Show kubeconfig content and path
+  ansible.builtin.debug:
+    msg: |
+      {{ k8s_user_kubeconfig_slurp.content | b64decode }}
+
+      Path: {{ k8s_user_kubeconfig_path }}

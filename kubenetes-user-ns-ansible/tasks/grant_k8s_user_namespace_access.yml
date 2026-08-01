@@ -1,0 +1,141 @@
+---
+# Subtask: Bind an existing user to a namespace with a built-in ClusterRole (admin|edit|view).
+# Lists users (kubeconfig files) and namespaces, prompts for choices, applies RBAC, then smoke-tests with the user's kubeconfig.
+
+- name: Resolve admin kubeconfig and directory for user kubeconfigs
+  ansible.builtin.set_fact:
+    k8s_admin_kubeconfig: "{{ k8s_admin_kubeconfig | default(lookup('env', 'HOME') + '/.kube/config', true) }}"
+    k8s_users_kubeconfig_dir: "{{ k8s_users_kubeconfig_dir | default('/root', true) }}"
+
+- name: Find user kubeconfig files
+  ansible.builtin.find:
+    paths: "{{ k8s_users_kubeconfig_dir }}"
+    patterns: "*.kubeconfig"
+    file_type: file
+  register: k8s_user_kubeconfig_files
+
+- name: Build list of usernames from kubeconfig filenames (no suffix)
+  ansible.builtin.set_fact:
+    # splitext('mamad.kubeconfig') -> ['mamad', '.kubeconfig']
+    k8s_existing_usernames: >-
+      {{
+        k8s_user_kubeconfig_files.files
+        | map(attribute='path')
+        | map('basename')
+        | map('splitext')
+        | map('first')
+        | list
+        | sort
+      }}
+
+- name: Fail if no users were found
+  ansible.builtin.fail:
+    msg: "No user kubeconfig files found in {{ k8s_users_kubeconfig_dir }} (*.kubeconfig)."
+  when: k8s_existing_usernames | length == 0
+
+- name: Show available users
+  ansible.builtin.debug:
+    msg: "Available users: {{ k8s_existing_usernames | join(', ') }}"
+
+- name: Get all namespaces (names only)
+  ansible.builtin.command: kubectl get ns -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+  environment:
+    KUBECONFIG: "{{ k8s_admin_kubeconfig }}"
+  register: k8s_all_ns
+  changed_when: false
+
+- name: Parse namespace list
+  ansible.builtin.set_fact:
+    k8s_existing_namespaces: "{{ k8s_all_ns.stdout_lines | reject('equalto', '') | list | sort }}"
+
+- name: Show available namespaces
+  ansible.builtin.debug:
+    msg: "Available namespaces: {{ k8s_existing_namespaces | join(', ') }}"
+
+- name: Prompt for target username
+  ansible.builtin.pause:
+    prompt: "Enter username to grant access (e.g. mamad OR mamad.kubeconfig)"
+  register: k8s_grant_user_prompt
+
+- name: Prompt for target namespace
+  ansible.builtin.pause:
+    prompt: "Enter namespace name"
+  register: k8s_grant_ns_prompt
+
+- name: Prompt for built-in role (admin|edit|view)
+  ansible.builtin.pause:
+    prompt: "Enter role (admin, edit, or view)"
+  register: k8s_grant_role_prompt
+
+- name: Set grant facts from prompts
+  ansible.builtin.set_fact:
+    k8s_grant_username_raw: "{{ k8s_grant_user_prompt.user_input | trim }}"
+    k8s_grant_namespace: "{{ k8s_grant_ns_prompt.user_input | trim }}"
+    k8s_grant_role: "{{ k8s_grant_role_prompt.user_input | trim | lower }}"
+
+- name: Normalize username from raw input (strip optional .kubeconfig)
+  ansible.builtin.set_fact:
+    # If user enters "mamad.kubeconfig", splitext() returns "mamad"
+    k8s_grant_username: "{{ (k8s_grant_username_raw | splitext).0 }}"
+
+- name: Validate username exists
+  ansible.builtin.fail:
+    msg: "User '{{ k8s_grant_username_raw }}' not found. Available: {{ k8s_existing_usernames | join(', ') }}"
+  when: k8s_grant_username not in k8s_existing_usernames
+
+- name: Validate namespace exists
+  ansible.builtin.fail:
+    msg: "Namespace '{{ k8s_grant_namespace }}' not found."
+  when: k8s_grant_namespace not in k8s_existing_namespaces
+
+- name: Validate role is one of admin, edit, view
+  ansible.builtin.fail:
+    msg: "Role must be admin, edit, or view."
+  when: k8s_grant_role not in ['admin', 'edit', 'view']
+
+- name: Set selected user kubeconfig path
+  ansible.builtin.set_fact:
+    k8s_selected_user_kubeconfig: "{{ k8s_users_kubeconfig_dir }}/{{ k8s_grant_username }}.kubeconfig"
+
+- name: Create RoleBinding for user in namespace
+  ansible.builtin.shell: |
+    kubectl create rolebinding "{{ k8s_grant_username }}-{{ k8s_grant_role }}-binding" \
+      --clusterrole="{{ k8s_grant_role }}" \
+      --user="{{ k8s_grant_username }}" \
+      -n "{{ k8s_grant_namespace }}" \
+      --dry-run=client -o yaml | kubectl apply -f -
+  args:
+    executable: /bin/bash
+  environment:
+    KUBECONFIG: "{{ k8s_admin_kubeconfig }}"
+  changed_when: true
+
+- name: Create test pod as selected user
+  ansible.builtin.command:
+    cmd: kubectl run rbac-smoke-test --image=nginx:alpine --restart=Never -n "{{ k8s_grant_namespace }}"
+  environment:
+    KUBECONFIG: "{{ k8s_selected_user_kubeconfig }}"
+  register: k8s_smoke_run
+  changed_when: true
+  failed_when: false
+
+- name: List pods in namespace as selected user
+  ansible.builtin.command:
+    cmd: kubectl get pods -n "{{ k8s_grant_namespace }}"
+  environment:
+    KUBECONFIG: "{{ k8s_selected_user_kubeconfig }}"
+  register: k8s_smoke_get_pods
+  changed_when: false
+  failed_when: false
+
+- name: Show pod list from user kubeconfig
+  ansible.builtin.debug:
+    var: k8s_smoke_get_pods.stdout_lines
+
+- name: Delete smoke-test pod as selected user
+  ansible.builtin.command:
+    cmd: kubectl delete pod rbac-smoke-test -n "{{ k8s_grant_namespace }}" --ignore-not-found=true
+  environment:
+    KUBECONFIG: "{{ k8s_selected_user_kubeconfig }}"
+  changed_when: true
+  failed_when: false
