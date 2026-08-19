@@ -1,0 +1,14 @@
+---
+all:
+  children:
+    squid_servers:
+      hosts:
+        squid-proxy:
+          # IP address or DNS name used by Ansible to connect to the server
+          ansible_host: "185.204.171.166"
+
+          # SSH user
+          ansible_user: "ubuntu"
+
+          # Set this to true if you connect using sudo
+          ansible_become: true

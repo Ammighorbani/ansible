@@ -1,0 +1,160 @@
+---
+# -------------------------------------------------
+# Configure APT, hostname, and install Squid
+# -------------------------------------------------
+
+- name: Check remote operating system
+  ansible.builtin.raw: |
+    if [ ! -f /etc/os-release ]; then
+      echo "The remote host does not contain /etc/os-release"
+      exit 1
+    fi
+
+    . /etc/os-release
+
+    if [ "$ID" != "ubuntu" ]; then
+      echo "Unsupported operating system: $ID"
+      exit 1
+    fi
+
+    if [ "$VERSION_CODENAME" != "{{ ubuntu_codename }}" ]; then
+      echo "Unsupported Ubuntu release: $VERSION_CODENAME"
+      exit 1
+    fi
+
+    echo "Ubuntu {{ ubuntu_codename }} detected"
+  register: remote_os_check
+  changed_when: false
+
+- name: Display operating system check
+  ansible.builtin.debug:
+    msg: "{{ remote_os_check.stdout_lines }}"
+
+# -------------------------------------------------
+# Backup the existing APT sources file
+# -------------------------------------------------
+
+- name: Check whether the APT sources file exists
+  ansible.builtin.raw: |
+    if [ -f /etc/apt/sources.list ]; then
+      echo "APT sources file exists"
+    else
+      echo "APT sources file does not exist"
+    fi
+  register: apt_sources_check
+  changed_when: false
+
+- name: Backup current APT sources
+  ansible.builtin.raw: |
+    if [ -f /etc/apt/sources.list ]; then
+      cp -a /etc/apt/sources.list \
+        /etc/apt/sources.list.backup-before-squid
+      echo "APT sources file backed up"
+    else
+      echo "No APT sources file found"
+    fi
+  register: apt_sources_backup
+  changed_when: false
+
+# -------------------------------------------------
+# Deploy the APT sources template
+# The template is rendered on the Ansible control node
+# and transferred through the raw module.
+# -------------------------------------------------
+
+- name: Deploy APT sources from template
+  ansible.builtin.raw: |
+    echo '{{ lookup("template", "apt-sources.list.j2") | b64encode }}' \
+      | base64 -d > /etc/apt/sources.list
+
+    chmod 0644 /etc/apt/sources.list
+    chown root:root /etc/apt/sources.list
+  register: apt_sources_deployment
+  changed_when: true
+
+- name: Display deployed APT sources
+  ansible.builtin.raw: |
+    cat /etc/apt/sources.list
+  register: deployed_apt_sources
+  changed_when: false
+
+- name: Show deployed APT sources
+  ansible.builtin.debug:
+    msg: "{{ deployed_apt_sources.stdout_lines }}"
+
+# -------------------------------------------------
+# Update APT package information
+# -------------------------------------------------
+
+- name: Update APT package cache
+  ansible.builtin.raw: |
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+  register: apt_update_result
+  changed_when: false
+
+# -------------------------------------------------
+# Configure the system hostname
+# -------------------------------------------------
+
+- name: Set system hostname
+  ansible.builtin.raw: |
+    current_hostname="$(hostname)"
+
+    if [ "$current_hostname" != "{{ squid_hostname }}" ]; then
+      hostnamectl set-hostname "{{ squid_hostname }}"
+      echo "Hostname changed to {{ squid_hostname }}"
+    else
+      echo "Hostname is already {{ squid_hostname }}"
+    fi
+  register: hostname_result
+  changed_when: >-
+    'Hostname changed' in
+    (hostname_result.stdout | default(''))
+
+- name: Configure hostname in /etc/hosts
+  ansible.builtin.raw: |
+    if grep -qE '^127\.0\.1\.1[[:space:]]+{{ squid_hostname }}([[:space:]]|$)' /etc/hosts; then
+      echo "Hostname entry already exists"
+    else
+      sed -i '/^[[:space:]]*127\.0\.1\.1[[:space:]]/d' /etc/hosts
+      printf '127.0.1.1\t{{ squid_hostname }}\n' >> /etc/hosts
+      echo "Hostname entry added"
+    fi
+  register: hosts_hostname_result
+  changed_when: >-
+    'Hostname entry added' in
+    (hosts_hostname_result.stdout | default(''))
+
+# -------------------------------------------------
+# Install Squid
+# -------------------------------------------------
+
+- name: Install Squid packages
+  ansible.builtin.raw: |
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get install -y {{ squid_packages | join(' ') }}
+  register: squid_install_result
+  changed_when: >-
+    'Setting up squid' in
+    (squid_install_result.stdout | default('')) or
+    'Setting up squid' in
+    (squid_install_result.stderr | default(''))
+
+# -------------------------------------------------
+# Enable Squid service
+# -------------------------------------------------
+
+- name: Enable Squid service
+  ansible.builtin.raw: |
+    systemctl enable "{{ squid_service_name }}"
+  register: squid_enable_result
+  changed_when: false
+
+- name: Display base setup result
+  ansible.builtin.debug:
+    msg:
+      - "APT repositories configured from templates/apt-sources.list.j2"
+      - "Hostname: {{ squid_hostname }}"
+      - "Squid package installation completed"
+      - "Squid service enabled"

@@ -1,0 +1,42 @@
+---
+# -------------------------------------------------
+# Deploy and start the Squid configuration
+# -------------------------------------------------
+
+- name: Create Squid directories
+  ansible.builtin.raw: |
+    mkdir -p /etc/squid
+    mkdir -p "{{ squid_cache_dir_path }}"
+    chown -R proxy:proxy "{{ squid_cache_dir_path }}"
+    chmod 0755 "{{ squid_cache_dir_path }}"
+  changed_when: true
+
+- name: Deploy Squid configuration using raw
+  ansible.builtin.raw: |
+    echo '{{ lookup("template", "squid.conf.j2") | b64encode }}' \
+      | base64 -d > "{{ squid_config_file }}"
+
+    chown root:root "{{ squid_config_file }}"
+    chmod 0644 "{{ squid_config_file }}"
+  register: squid_config_deploy
+  changed_when: true
+
+- name: Validate Squid configuration
+  ansible.builtin.raw: |
+    squid -k parse -f "{{ squid_config_file }}"
+  register: squid_parse_result
+  changed_when: false
+
+- name: Initialize Squid cache directories
+  ansible.builtin.raw: |
+    squid -z -f "{{ squid_config_file }}"
+  register: squid_cache_init_result
+  changed_when: false
+  failed_when: false
+
+- name: Enable and restart Squid
+  ansible.builtin.raw: |
+    systemctl enable "{{ squid_service_name }}"
+    systemctl restart "{{ squid_service_name }}"
+  register: squid_restart_result
+  changed_when: true

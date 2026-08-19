@@ -1,0 +1,84 @@
+---
+# -------------------------------------------------
+# Ask for the requested Squid operation
+# -------------------------------------------------
+
+- name: Ask for deployment action
+  ansible.builtin.pause:
+    prompt: |
+      =========================================
+      Select Squid Deployment Action
+      =========================================
+
+      1. Full installation and configuration
+      2. Base setup only
+      3. Squid configuration only
+      4. Validate Squid
+      5. Exit
+
+      Choose action (1-5):
+  register: squid_action_input
+  changed_when: false
+
+- name: Validate deployment action
+  ansible.builtin.assert:
+    that:
+      - squid_action_input.user_input | trim in ['1', '2', '3', '4', '5']
+    fail_msg: "Invalid action. Please choose a number from 1 to 5."
+
+- name: Save selected deployment action
+  ansible.builtin.set_fact:
+    squid_action: "{{ squid_action_input.user_input | trim }}"
+
+- name: Display selected action
+  ansible.builtin.debug:
+    msg: "Selected action: {{ squid_action }}"
+
+# -------------------------------------------------
+# Full installation and configuration
+# -------------------------------------------------
+
+- name: Execute full Squid installation
+  ansible.builtin.include_tasks:
+    file: tasks/main.yml
+  when: squid_action == '1'
+
+# -------------------------------------------------
+# Base setup only
+# -------------------------------------------------
+
+- name: Execute Squid base setup
+  ansible.builtin.include_tasks:
+    file: tasks/base.yml
+  when: squid_action == '2'
+
+# -------------------------------------------------
+# Squid configuration only
+# -------------------------------------------------
+
+- name: Execute Squid configuration
+  ansible.builtin.include_tasks:
+    file: tasks/config-squid.yml
+  when: squid_action == '3'
+
+# -------------------------------------------------
+# Squid validation only
+# -------------------------------------------------
+
+- name: Execute Squid validation
+  ansible.builtin.include_tasks:
+    file: tasks/test-squid.yml
+  when: squid_action == '4'
+
+# -------------------------------------------------
+# Exit
+# -------------------------------------------------
+
+- name: Display exit message
+  ansible.builtin.debug:
+    msg: "Goodbye!"
+  when: squid_action == '5'
+
+- name: End play
+  ansible.builtin.meta: end_play
+  when: squid_action == '5'

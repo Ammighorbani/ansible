@@ -1,0 +1,55 @@
+---
+# -------------------------------------------------
+# Validate Squid installation and runtime status
+# -------------------------------------------------
+
+- name: Validate Squid configuration syntax
+  ansible.builtin.raw: |
+    squid -k parse -f "{{ squid_config_file }}"
+  register: squid_config_test
+  changed_when: false
+
+- name: Display Squid configuration result
+  ansible.builtin.debug:
+    msg: "{{ squid_config_test.stdout_lines }}"
+
+- name: Check Squid service status
+  ansible.builtin.raw: |
+    systemctl --no-pager --full status "{{ squid_service_name }}"
+  register: squid_service_status
+  changed_when: false
+  failed_when: false
+
+- name: Display Squid service status
+  ansible.builtin.debug:
+    msg: "{{ squid_service_status.stdout_lines }}"
+
+- name: Check Squid listening port
+  ansible.builtin.raw: |
+    ss -lntp | grep ':3128'
+  register: squid_listener_status
+  changed_when: false
+  failed_when: false
+
+- name: Display Squid listener status
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        squid_listener_status.stdout_lines
+        if squid_listener_status.stdout_lines | length > 0
+        else ['Squid is not listening on port 3128']
+      }}
+
+- name: Read the latest Squid access log
+  ansible.builtin.raw: |
+    if [ -f /var/log/squid/access.log ]; then
+      tail -n 50 /var/log/squid/access.log
+    else
+      echo "Squid access log does not exist"
+    fi
+  register: squid_access_log
+  changed_when: false
+
+- name: Display the latest Squid access log
+  ansible.builtin.debug:
+    msg: "{{ squid_access_log.stdout_lines }}"

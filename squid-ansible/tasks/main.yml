@@ -1,0 +1,14 @@
+---
+# Execute the complete Squid deployment
+
+- name: Execute base system setup
+  ansible.builtin.include_tasks:
+    file: tasks/base.yml
+
+- name: Execute Squid configuration
+  ansible.builtin.include_tasks:
+    file: tasks/config-squid.yml
+
+- name: Test Squid installation and configuration
+  ansible.builtin.include_tasks:
+    file: tasks/test-squid.yml

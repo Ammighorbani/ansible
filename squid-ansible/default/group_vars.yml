@@ -1,0 +1,76 @@
+---
+# General system configuration
+
+# Hostname assigned to the Squid server
+squid_hostname: "k8s-squid-proxy"
+
+# Ubuntu release codename
+ubuntu_codename: "jammy"
+
+# APT repository configuration
+repos:
+  apt_package: "http://archive.ubuntu.com/ubuntu"
+
+# Packages required for the Squid proxy
+squid_packages:
+  - squid
+
+# Squid service configuration
+squid_service_name: "squid"
+squid_config_file: "/etc/squid/squid.conf"
+squid_http_port: "0.0.0.0:3128"
+
+# Client IP addresses allowed to use this proxy
+# The template automatically appends /32 to each IPv4 address
+allow_ips:
+  - "192.168.10.100"
+  - "81.12.75.26"
+  - "2.144.23.73"
+
+# Source IP used by Squid for outbound connections
+# This IP must exist on the Squid server or be routed by the provider
+outgoing_ip: "185.204.171.202"
+
+# DNS servers used by Squid
+squid_dns_nameservers:
+  - "1.1.1.1"
+  - "8.8.8.8"
+
+# Squid cache configuration
+squid_cache_mem: "256 MB"
+squid_maximum_object_size: "1024 MB"
+squid_cache_dir_type: "ufs"
+squid_cache_dir_path: "/var/spool/squid"
+squid_cache_size_mb: "10000"
+squid_cache_level_1_dirs: "16"
+squid_cache_level_2_dirs: "256"
+
+# Squid log configuration
+squid_access_log: "/var/log/squid/access.log"
+squid_cache_log: "/var/log/squid/cache.log"
+
+# Squid privacy configuration
+squid_forwarded_for: "delete"
+squid_via: "off"
+
+# Squid refresh patterns
+squid_refresh_patterns:
+  - pattern: "^ftp:"
+    min: "1440"
+    percent: "20%"
+    max: "10080"
+
+  - pattern: "^gopher:"
+    min: "1440"
+    percent: "0%"
+    max: "1440"
+
+  - pattern: "-i (/cgi-bin/|\\?)"
+    min: "0"
+    percent: "0%"
+    max: "0"
+
+  - pattern: "."
+    min: "0"
+    percent: "20%"
+    max: "4320"
