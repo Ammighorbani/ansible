@@ -1,0 +1,30 @@
+# Preinstall resolv.conf.j2 template vars
+DNS1: 8.8.8.8
+DNS2: 1.1.1.1
+
+# Preinstall apt-sources.list.j2 template vars
+repos:
+  apt_package: "http://mirror.arvancloud.ir/"
+
+# Preinstall task vars
+resolv_conf_path: "/etc/resolv.conf"
+hostname_path: "/etc/hostname"
+hosts_path: "/etc/hosts"
+
+# Configuration task vars
+n8n_path: "/root/n8n/"
+n8n_data_path: "/root/n8n/data"
+n8n_port: "5678"
+n8n_version: "latest"
+n8n_timezone: UTC
+n8n_domain: "n8n.fpe.local"
+n8n_basic_auth_active: true
+use_ssl: false
+n8n_basic_auth_user: "admin"
+n8n_basic_auth_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          34386137386334663037656137666536653062623963313332353737343639356230666435376137
+          6365363562313062306366316237666236646561346130610a356230323838343730326162653237
+          36353563316636373636333064353862306234323531316464373833663238326132653035373466
+          3037396163313330350a383363383862643264393062356338313963343039376438326364333230
+          3762

@@ -1,0 +1,60 @@
+hostname_path: "/etc/hostname"
+hosts_path: "/etc/hosts"
+
+# Main configuration directory
+SQUID_DIR: "/etc/squid"
+
+# Cache / Spool swap directory
+SQUID_CACHE_DIR: "/var/spool/squid"
+
+# Main configuration file path
+SQUID_CONFIG_FILE: "/etc/squid/squid.conf"
+
+repos:
+  apt_package: "http://mirror.arvancloud.ir/ubuntu"
+
+# ==============================================================================
+# General System & Service Variables
+# ==============================================================================
+squid_hostname: "squid-proxy"
+squid_service_name: "squid"
+squid_config_file: "/etc/squid/squid.conf"
+
+# Backward compatibility
+SQUID_DIR: "/etc/squid"
+SQUID_CACHE_DIR: "/var/spool/squid"
+SQUID_CONFIG_FILE: "/etc/squid/squid.conf"
+
+# ==============================================================================
+# Network & Listener Configuration
+# ==============================================================================
+squid_http_port: 3128
+outgoing_ip: "185.204.171.202"
+
+# Client IPs (Without /32)
+allow_ips:
+  - "81.12.75.26"
+
+# DNS Servers
+squid_dns_nameservers:
+  - "1.1.1.1"
+  - "8.8.8.8"
+
+# ==============================================================================
+# Cache Settings
+# ==============================================================================
+squid_cache_mem: "256 MB"
+squid_maximum_object_size: "1024 MB"
+squid_cache_dir_type: "ufs"
+squid_cache_dir_path: "/var/spool/squid"
+squid_cache_size_mb: "10000"
+squid_cache_level_1_dirs: "16"
+squid_cache_level_2_dirs: "256"
+
+# ==============================================================================
+# Logging & Privacy
+# ==============================================================================
+squid_access_log: "/var/log/squid/access.log"
+squid_cache_log: "/var/log/squid/cache.log"
+squid_forwarded_for: "delete"
+squid_via: "off"

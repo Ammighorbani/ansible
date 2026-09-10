@@ -1,0 +1,51 @@
+---
+# tasks file for configuration
+#
+- name: Create n8n directory
+  ansible.builtin.file:
+    name: "{{ n8n_path }}"
+    state: directory
+    mode: "0755"
+    owner: "root"
+    group: "root"
+
+- name: Create n8n data directory
+  ansible.builtin.file:
+    name: "{{ n8n_data_path }}"
+    mode: "0755"
+    owner: "1000"
+    group: "1000"
+
+- name: Create .env file
+  ansible.builtin.template:
+    src: "env.j2"
+    dest: "{{ n8n_path }}/.env"
+    mode: "0600"
+
+- name: Create docker compose file
+  ansible.builtin.template:
+    src: "docker-compose.yml.j2"
+    dest: "{{ n8n_path }}docker-compose.yml"
+    mode: "0644"
+
+- name: Ensure docker network web_net exists
+  community.docker.docker_network:
+    name: web_net
+    state: present
+
+- name: Build and start n8n container
+  community.docker.docker_compose_v2:
+    project_src: "{{ n8n_path }}"
+    build: always
+    state: present
+  register: docker_compose_result
+
+- name: Display n8n information
+  debug:
+    msg:
+      - "n8n has been deployed successfully!"
+      - "Access URL: http://{{ ansible_host }}:{{ n8n_port }}"
+      - "Username: {{ n8n_basic_auth_user }}"
+      - "Password: {{ n8n_basic_auth_password }}"
+      - "Data directory: {{ n8n_data_path }}"
+      - "Python is installed inside the custom n8n container."

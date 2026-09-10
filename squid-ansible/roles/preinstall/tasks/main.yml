@@ -1,0 +1,49 @@
+---
+# tasks file for preinstall
+#
+- name: Ensure distribution
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution | lower == 'ubuntu'
+    fail_msg: "{{ ansible_distribution }} is not satisfy OS."
+    success_msg: "{{ ansible_distribution }} is satisfy OS..."
+
+- name: Update system hostname /etc/hostname
+  ansible.builtin.lineinfile:
+    path: "{{ hostname_path }}"
+    regexp: '^.*$'
+    line: "{{ inventory_hostname }}"
+    state: present
+    
+- name: Update system hosts /etc/hosts
+  ansible.builtin.lineinfile:
+    path: "{{ hosts_path }}"
+    regexp: '^127\.0\.1\.1'
+    line: '127.0.1.1 {{ inventory_hostname }} localhost'
+    state: present
+    backup: true
+
+- name: Replace apt sources list
+  ansible.builtin.template:
+    src: "apt-sources.list.j2"
+    dest: "/etc/apt/sources.list"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install packages
+  ansible.builtin.apt:
+    pkg:
+      - "vim"
+      - "squid"
+
+- name: Enable & start squid service
+  ansible.builtin.service:
+    name: "squid"
+    enabled: true
+    state: restarted

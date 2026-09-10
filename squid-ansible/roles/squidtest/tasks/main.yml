@@ -1,0 +1,86 @@
+---
+# tasks file for squidtest
+#
+# =================================================
+# Validate Squid Installation and Runtime Status
+# =================================================
+
+# -------------------------------------------------
+# 1. Validate Squid configuration syntax
+# Execute configuration parser binary natively without invoking shell.
+# -------------------------------------------------
+- name: Validate Squid configuration syntax
+  ansible.builtin.command:
+    cmd: "squid -k parse -f {{ SQUID_CONFIG_FILE }}"
+  register: squid_config_test
+  changed_when: false
+
+- name: Display Squid configuration validation output
+  ansible.builtin.debug:
+    msg: "{{ squid_config_test.stdout_lines | default(squid_config_test.stderr_lines) }}"
+
+# -------------------------------------------------
+# 2. Inspect Squid service status natively
+# Collect system service facts to inspect state without raw CLI output parsing.
+# -------------------------------------------------
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Display Squid service status
+  ansible.builtin.debug:
+    msg:
+      - "Service: {{ squid_service_name }}"
+      - "State: {{ ansible_facts.services[squid_service_name + '.service'].state | default('not-found') }}"
+      - "Status: {{ ansible_facts.services[squid_service_name + '.service'].status | default('not-found') }}"
+
+# -------------------------------------------------
+# 3. Verify Squid listening port
+# Use wait_for to test socket connectivity on localhost with a brief timeout.
+# -------------------------------------------------
+- name: Verify Squid listening port
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ squid_http_port | default(3128) }}"
+    state: started
+    timeout: 3
+  register: squid_port_check
+  ignore_errors: true
+
+- name: Display Squid listener status
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        'Squid is actively listening on port ' ~ (squid_http_port | default(3128))
+        if squid_port_check is succeeded
+        else 'Squid is NOT listening on port ' ~ (squid_http_port | default(3128))
+      }}
+
+# -------------------------------------------------
+# 4. Check Squid access log file metadata
+# stat module inspects file existence cleanly.
+# -------------------------------------------------
+- name: Check if Squid access log exists
+  ansible.builtin.stat:
+    path: /var/log/squid/access.log
+  register: squid_access_log_stat
+
+# -------------------------------------------------
+# 5. Read recent entries from Squid access log
+# Tail log lines only if the file exists on the target host.
+# -------------------------------------------------
+- name: Read recent lines from Squid access log
+  ansible.builtin.command:
+    cmd: tail -n 50 /var/log/squid/access.log
+  register: squid_access_log
+  when: squid_access_log_stat.stat.exists
+  changed_when: false
+
+- name: Display recent Squid access log entries
+  ansible.builtin.debug:
+    msg: >-
+      {{
+        squid_access_log.stdout_lines
+        if (squid_access_log_stat.stat.exists and squid_access_log is defined and squid_access_log.stdout_lines is defined)
+        else ['Squid access log does not exist or is not readable']
+      }}
+

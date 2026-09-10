@@ -1,0 +1,42 @@
+---
+# tasks file for configuration
+#
+- name: Ensure squid directory exist
+  ansible.builtin.file:
+    path: "{{ SQUID_DIR }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Ensure squid cache direcory exist
+  ansible.builtin.file:
+    path: "{{ SQUID_CACHE_DIR }}"
+    state: directory
+    owner: proxy
+    group: proxy
+    mode: "0755"
+
+- name: Squid configuration file
+  ansible.builtin.template:
+    src: "squid.conf.j2"
+    dest: "{{ SQUID_CONFIG_FILE }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+    validate: squid -k parse -f %s
+  register: squid_config_deploy
+
+- name: Initialize squid cache directories
+  ansible.builtin.command:
+    cmd: "squid -z -f {{ SQUID_CONFIG_FILE }}"
+  when: squid_config_deploy.changed
+  changed_when: true
+  failed_when: false
+
+- name: Restart squid service
+  ansible.builtin.service:
+    name: "squid"
+    enabled: true
+    state: restarted

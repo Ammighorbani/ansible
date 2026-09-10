@@ -1,0 +1,17 @@
+---
+# tasks file for install-pkgs
+#
+- name: Ensure required packages exist
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - vim
+    - curl
+    - gnupg
+    - lsb-release
+    - docker.io
+    - docker-compose-v2
+    - apt-transport-https
+    - ca-certificates
+    - python3-pip
