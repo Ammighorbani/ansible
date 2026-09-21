@@ -1,0 +1,73 @@
+---
+- name: Create Gitlab directory
+  ansible.builtin.file:
+    name: "{{ gitlab_path }}"
+    state: directory
+    mode: "755"
+    owner: "root"
+    group: "root"
+
+- name: Create .env file
+  ansible.builtin.template:
+    src: "env.j2"
+    dest: "{{ gitlab_path }}/.env"
+    mode: "600"
+
+- name: Create docker compose file
+  ansible.builtin.template:
+    src: "docker-compose.yml.j2"
+    dest: "{{ gitlab_path }}/docker-compose.yml"
+    mode: "644"
+
+- name: Ensure docker network web_net exists
+  community.docker.docker_network:
+    name: web_net
+    state: present
+
+- name: Build and start gitlab container
+  community.docker.docker_compose_v2:
+    project_src: "{{ gitlab_path }}"
+    state: present
+  register: docker_compose_result
+
+- name: Extract runner registration token from GitLab
+  community.docker.docker_container_exec:
+    container: "{{ gitlab_container_name | default('gitlab-server') }}"
+    command: >
+      gitlab-rails runner -e production
+      "puts Gitlab::CurrentSettings.current_application_settings.runners_registration_token"
+  register: gitlab_runner_token_raw
+  until: gitlab_runner_token_raw.stdout is defined and gitlab_runner_token_raw.stdout | length > 0
+  retries: 30
+  delay: 10
+
+- name: Wait for GitLab HTTP service to be fully ready
+  community.docker.docker_container_exec:
+    container: "{{ gitlab_runner_container_name | default('gitlab-runner') }}"
+    command: "curl -s -o /dev/null -w '%{http_code}' http://{{ gitlab_container_name | default('gitlab-server') }}/users/sign_in"
+  register: gitlab_health_check
+  until: gitlab_health_check.stdout == "200"
+  retries: 30
+  delay: 10
+
+
+- name: Register GitLab Runner
+  community.docker.docker_container_exec:
+    container: "{{ gitlab_runner_container_name | default('gitlab-runner') }}"
+    command: >
+      gitlab-runner register
+      --non-interactive
+      --url "http://{{ gitlab_container_name | default('gitlab-server') }}"
+      --registration-token "{{ gitlab_runner_token_raw.stdout | trim }}"
+      --executor "docker"
+      --docker-image "alpine:latest"
+      --description "ansible-auto-runner"
+      --docker-network-mode "{{ network_name }}"
+      --docker-volumes "/var/run/docker.sock:/var/run/docker.sock"
+  register: runner_register_output
+  until: runner_register_output.rc == 0 or 'already registered' in runner_register_output.stderr
+  retries: 5
+  delay: 5
+  failed_when:
+    - runner_register_output.rc != 0
+    - "'already registered' not in runner_register_output.stderr"

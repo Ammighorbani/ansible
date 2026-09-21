@@ -1,0 +1,16 @@
+---
+# vars file for gitlab-configuration
+#
+# Gitlab container
+gitlab_path: "/root/gitlab"
+gitlab_image_tag: latest
+gitlab_container_name: gitlab-server
+gitlab_runner_image_tag: latest
+gitlab_runner_container_name: gitlab-runner
+
+# Ports
+registry_port: 5050
+gitlab_internal_port: 80
+
+# Network & Volumes Prefix
+network_name: web_net

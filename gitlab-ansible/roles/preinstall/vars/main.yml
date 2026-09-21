@@ -1,0 +1,12 @@
+---
+# vars file for preinstall
+#
+repos:
+  apt_package: "http://mirror.arvancloud.ir/ubuntu"
+
+resolv_conf_path: "/etc/resolv.conf"
+hostname_path: "/etc/hostname"
+hosts_path: "/etc/hosts"
+
+DNS1: 8.8.8.8
+DNS2: 1.1.1.1

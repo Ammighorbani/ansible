@@ -1,0 +1,16 @@
+---
+# vars file for nginx-configuration
+#
+# Nginx ports
+nginx_http_port: 80
+nginx_registry_port: 5050
+
+# Nginx container & image
+nginx_image_tag: "alpine"
+nginx_container_name: "nginx"
+nginx_path: "/root/nginx"
+nginx_http_port: "80"
+nginx_registry_port: "5050"
+network_name: "web_net"
+gitlab_sub_http_srvn: "git"
+gitlab_sub_container_registry_srvn: "cr"

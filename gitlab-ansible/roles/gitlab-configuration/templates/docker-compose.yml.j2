@@ -1,0 +1,47 @@
+version: '3.8'
+
+networks:
+  web_net:
+    external: true
+    name: ${network_name:-web_net}
+
+volumes:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  gitlab_runner_config:
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:${gitlab_image_tag:-latest}
+    container_name: ${gitlab_container_name:-gitlab-server}
+    restart: always
+    hostname: '${domain_name}'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://${external_sub}.${domain_name}'
+        registry_external_url 'http://${registry_external_sub}.${domain_name}:${registry_port}'
+        gitlab_rails['registry_enabled'] = true
+        gitlab_rails['registry_host'] = "${registry_external_sub}.${domain_name}"
+        gitlab_rails['registry_port'] = "${registry_port}"
+        gitlab_rails['registry_api_url'] = "http://localhost:5000"
+        nginx['listen_port'] = ${gitlab_internal_port}
+        nginx['listen_https'] = false
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    networks:
+      - web_net
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:${gitlab_runner_image_tag:-latest}
+    container_name: ${gitlab_runner_container_name:-gitlab-runner}
+    restart: always
+    depends_on:
+      - gitlab
+    volumes:
+      - gitlab_runner_config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - web_net

@@ -1,0 +1,11 @@
+# Gilab docker compose
+domain_name: "ammighorbani.local"
+network_name: "web_net"
+
+# Gilab ports
+registry_port: 5050
+gitlab_internal_port: 80
+
+# Nginx configuration file
+gitlab_sub_http_srvn: "git"
+gitlab_sub_container_registry_srvn: "cr"

@@ -1,0 +1,40 @@
+---
+# tasks file for nginx-configuration
+#
+- name: Create Nginx directory
+  ansible.builtin.file:
+    name: "{{ nginx_path }}"
+    state: directory
+    mode: "755"
+    owner: "root"
+    group: "root"
+
+- name: Create .env file
+  ansible.builtin.template:
+    src: "env.j2"
+    dest: "{{ nginx_path }}/.env"
+    mode: "600"
+
+- name: Create nginx.conf file
+  ansible.builtin.template:
+    src: "nginx.conf.j2"
+    dest: "{{ nginx_path }}/nginx.conf"
+    mode: "644"
+
+- name: Create docker compose file
+  ansible.builtin.template:
+    src: "docker-compose.yml.j2"
+    dest: "{{ nginx_path }}/docker-compose.yml"
+    mode: "644"
+
+- name: Ensure docker network web_net exists
+  community.docker.docker_network:
+    name: web_net
+    state: present
+
+- name: Build and start nginx container
+  community.docker.docker_compose_v2:
+    project_src: "{{ nginx_path }}"
+    build: always
+    state: present
+  register: docker_compose_result
